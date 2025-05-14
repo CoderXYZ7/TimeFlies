@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TimeFlies - Live Timeline Maker</title>
+    <style>
+        :root {
+            --primary: #3498db;
+            --secondary: #2ecc71;
+            --accent: #e74c3c;
+            --background: #f8f9fa;
+            --dark: #343a40;
+            --light: #f8f9fa;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background);
+            color: var(--dark);
+            line-height: 1.6;
+        }
+
+        header {
+            background-color: var(--primary);
+            color: white;
+            text-align: center;
+            padding: 1rem;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 2rem;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+
+        .actions {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary);
+            color: white;
+        }
+
+        .btn-accent {
+            background-color: var(--accent);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #2980b9;
+        }
+
+        .btn-secondary:hover {
+            background-color: #27ae60;
+        }
+
+        .btn-accent:hover {
+            background-color: #c0392b;
+        }
+
+        .timeline-status {
+            background-color: white;
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .timeline-wrapper {
+            position: relative;
+            margin-top: 2rem;
+        }
+
+        .timeline {
+            position: relative;
+            padding: 1rem 0;
+        }
+
+        .timeline-line {
+            position: absolute;
+            left: 20px;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background-color: var(--primary);
+        }
+
+        .timeline-event {
+            position: relative;
+            margin-bottom: 1.5rem;
+            padding-left: 50px;
+        }
+
+        .timeline-point {
+            position: absolute;
+            left: 12px;
+            top: 0;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            border: 4px solid white;
+            box-shadow: 0 0 0 1px var(--primary);
+        }
+
+        .timeline-note .timeline-point {
+            background-color: var(--secondary);
+            box-shadow: 0 0 0 1px var(--secondary);
+        }
+
+        .timeline-event-content {
+            background-color: white;
+            padding: 1rem;
+            border-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .timeline-time {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .input-group {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .input-group.inline {
+            grid-template-columns: auto 1fr;
+            align-items: center;
+        }
+
+        input, textarea {
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 1rem;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 4px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .modal-close {
+            cursor: pointer;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .file-label {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            background-color: #f0f0f0;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 0.5rem;
+        }
+
+        .note-image {
+            max-width: 100%;
+            margin-top: 0.5rem;
+            border-radius: 4px;
+        }
+
+        .export-content {
+            width: 100%;
+            height: 300px;
+            margin-top: 1rem;
+            font-family: monospace;
+            white-space: pre;
+        }
+
+        .duration {
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        @media (max-width: 600px) {
+            .actions {
+                flex-direction: column;
+            }
+            
+            .timeline-event {
+                padding-left: 40px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>TimeFlies</h1>
+        <p>Live Timeline Maker</p>
+    </header>
+
+    <div class="container">
+        <div class="actions">
+            <button id="start-button" class="btn-primary">Start Timeline</button>
+            <button id="point-button" class="btn-secondary" disabled>Add Point</button>
+            <button id="note-button" class="btn-secondary" disabled>Add Note</button>
+            <button id="stop-button" class="btn-accent" disabled>Stop Timeline</button>
+            <button id="export-button" class="btn-primary" disabled>Export</button>
+            <button id="clear-button" class="btn-accent">Clear Data</button>
+        </div>
+
+        <div class="timeline-status">
+            <div id="status-message">Timeline not started.</div>
+            <div id="elapsed-time"></div>
+        </div>
+
+        <div class="timeline-wrapper">
+            <div class="timeline">
+                <div class="timeline-line"></div>
+                <div id="timeline-events"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Point Modal -->
+    <div id="point-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add Timeline Point</h2>
+                <span class="modal-close" data-modal="point-modal">&times;</span>
+            </div>
+            <div class="input-group">
+                <label for="point-name">Point Name:</label>
+                <input type="text" id="point-name" placeholder="Enter a name for this point">
+            </div>
+            <div class="modal-actions">
+                <button id="save-point" class="btn-primary">Save</button>
+                <button class="btn-accent modal-close" data-modal="point-modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Note Modal -->
+    <div id="note-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add Note</h2>
+                <span class="modal-close" data-modal="note-modal">&times;</span>
+            </div>
+            <div class="input-group">
+                <label for="note-title">Note Title:</label>
+                <input type="text" id="note-title" placeholder="Enter a title for this note">
+            </div>
+            <div class="input-group">
+                <label for="note-content">Note Content:</label>
+                <textarea id="note-content" rows="4" placeholder="Enter your note content"></textarea>
+            </div>
+            <div class="input-group">
+                <label for="note-image">Image (optional):</label>
+                <input type="file" id="note-image" class="file-input" accept="image/*">
+                <label for="note-image" class="file-label">Choose an image</label>
+                <div id="image-preview"></div>
+            </div>
+            <div class="modal-actions">
+                <button id="save-note" class="btn-primary">Save</button>
+                <button class="btn-accent modal-close" data-modal="note-modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Modal -->
+    <div id="export-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Export Timeline</h2>
+                <span class="modal-close" data-modal="export-modal">&times;</span>
+            </div>
+            <p>Your timeline has been exported to Markdown format:</p>
+            <textarea id="export-content" class="export-content" readonly></textarea>
+            <div class="modal-actions">
+                <button id="copy-export" class="btn-primary">Copy to Clipboard</button>
+                <button id="download-md" class="btn-secondary">Download .md</button>
+                <button class="btn-accent modal-close" data-modal="export-modal">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // App state
+        const state = {
+            startTime: null,
+            stopTime: null,
+            isRunning: false,
+            events: [],
+            currentTimeline: null
+        };
+
+        // Load state from localStorage
+        function loadState() {
+            const savedState = localStorage.getItem('timeFliesState');
+            if (savedState) {
+                const parsedState = JSON.parse(savedState);
+                
+                // Convert date strings back to Date objects
+                if (parsedState.startTime) parsedState.startTime = new Date(parsedState.startTime);
+                if (parsedState.stopTime) parsedState.stopTime = new Date(parsedState.stopTime);
+                parsedState.events.forEach(event => {
+                    event.time = new Date(event.time);
+                });
+                
+                Object.assign(state, parsedState);
+                
+                // Update UI based on loaded state
+                updateUI();
+            }
+        }
+
+        // Save state to localStorage
+        function saveState() {
+            localStorage.setItem('timeFliesState', JSON.stringify(state));
+        }
+
+        // Format time as HH:MM:SS
+        function formatTime(date) {
+            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        }
+
+        // Format date as YYYY-MM-DD
+        function formatDate(date) {
+            return date.toLocaleDateString([], { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '-');
+        }
+
+        // Calculate duration between two times
+        function calculateDuration(start, end) {
+            const diff = Math.floor((end - start) / 1000);
+            const hours = Math.floor(diff / 3600);
+            const minutes = Math.floor((diff % 3600) / 60);
+            const seconds = diff % 60;
+            
+            let result = '';
+            if (hours > 0) result += `${hours}h `;
+            if (minutes > 0 || hours > 0) result += `${minutes}m `;
+            result += `${seconds}s`;
+            
+            return result;
+        }
+
+        // Update the UI based on current state
+        function updateUI() {
+            const startButton = document.getElementById('start-button');
+            const pointButton = document.getElementById('point-button');
+            const noteButton = document.getElementById('note-button');
+            const stopButton = document.getElementById('stop-button');
+            const exportButton = document.getElementById('export-button');
+            const statusMessage = document.getElementById('status-message');
+            const elapsedTime = document.getElementById('elapsed-time');
+            const timelineEvents = document.getElementById('timeline-events');
+            
+            // Update buttons based on state
+            if (state.isRunning) {
+                startButton.disabled = true;
+                pointButton.disabled = false;
+                noteButton.disabled = false;
+                stopButton.disabled = false;
+                exportButton.disabled = true;
+                
+                statusMessage.textContent = `Timeline started at ${formatTime(state.startTime)}`;
+                
+                // Update elapsed time
+                const updateElapsedDisplay = () => {
+                    if (state.isRunning) {
+                        const now = new Date();
+                        elapsedTime.textContent = `Elapsed time: ${calculateDuration(state.startTime, now)}`;
+                        requestAnimationFrame(updateElapsedDisplay);
+                    }
+                };
+                updateElapsedDisplay();
+            } else {
+                startButton.disabled = false;
+                pointButton.disabled = true;
+                noteButton.disabled = true;
+                stopButton.disabled = true;
+                
+                if (state.stopTime) {
+                    exportButton.disabled = false;
+                    statusMessage.textContent = `Timeline stopped at ${formatTime(state.stopTime)}`;
+                    elapsedTime.textContent = `Total duration: ${calculateDuration(state.startTime, state.stopTime)}`;
+                } else {
+                    exportButton.disabled = true;
+                    statusMessage.textContent = 'Timeline not started.';
+                    elapsedTime.textContent = '';
+                }
+            }
+            
+            // Render timeline events
+            timelineEvents.innerHTML = '';
+            state.events.forEach((event, index) => {
+                const eventElement = document.createElement('div');
+                eventElement.className = `timeline-event ${event.type === 'note' ? 'timeline-note' : ''}`;
+                
+                const timeStr = formatTime(event.time);
+                let durationStr = '';
+                
+                // Calculate duration for sections (time between points)
+                if (event.type === 'point' && index > 0) {
+                    const prevEvent = state.events
+                        .slice(0, index)
+                        .reverse()
+                        .find(e => e.type === 'point' || e.type === 'start');
+                    
+                    if (prevEvent) {
+                        durationStr = ` <span class="duration">(${calculateDuration(prevEvent.time, event.time)})</span>`;
+                    }
+                }
+                
+                let content = `
+                    <div class="timeline-point"></div>
+                    <div class="timeline-event-content">
+                        <div class="timeline-time">${timeStr}${durationStr}</div>
+                `;
+                
+                if (event.type === 'start') {
+                    content += `<strong>Timeline Started</strong>`;
+                } else if (event.type === 'stop') {
+                    content += `<strong>Timeline Stopped</strong>`;
+                } else if (event.type === 'point') {
+                    content += `<strong>${event.name || 'Unnamed Point'}</strong>`;
+                } else if (event.type === 'note') {
+                    content += `
+                        <strong>${event.title || 'Note'}</strong>
+                        <p>${event.content || ''}</p>
+                    `;
+                    
+                    if (event.image) {
+                        content += `<img src="${event.image}" class="note-image" alt="Note image">`;
+                    }
+                }
+                
+                content += `</div>`;
+                eventElement.innerHTML = content;
+                timelineEvents.appendChild(eventElement);
+            });
+        }
+
+        // Add event handlers for all buttons
+        document.getElementById('start-button').addEventListener('click', () => {
+            state.startTime = new Date();
+            state.stopTime = null;
+            state.isRunning = true;
+            state.events = [
+                {
+                    type: 'start',
+                    time: state.startTime
+                }
+            ];
+            
+            saveState();
+            updateUI();
+        });
+
+        document.getElementById('stop-button').addEventListener('click', () => {
+            state.stopTime = new Date();
+            state.isRunning = false;
+            state.events.push({
+                type: 'stop',
+                time: state.stopTime
+            });
+            
+            saveState();
+            updateUI();
+        });
+
+        document.getElementById('point-button').addEventListener('click', () => {
+            document.getElementById('point-modal').style.display = 'flex';
+        });
+
+        document.getElementById('note-button').addEventListener('click', () => {
+            document.getElementById('note-modal').style.display = 'flex';
+            document.getElementById('image-preview').innerHTML = '';
+        });
+
+        document.getElementById('export-button').addEventListener('click', () => {
+            const exportContent = document.getElementById('export-content');
+            exportContent.value = generateMarkdown();
+            document.getElementById('export-modal').style.display = 'flex';
+        });
+
+        document.getElementById('clear-button').addEventListener('click', () => {
+            if (confirm('Are you sure you want to clear all timeline data?')) {
+                localStorage.removeItem('timeFliesState');
+                Object.assign(state, {
+                    startTime: null,
+                    stopTime: null,
+                    isRunning: false,
+                    events: [],
+                    currentTimeline: null
+                });
+                updateUI();
+            }
+        });
+
+        // Handle point modal
+        document.getElementById('save-point').addEventListener('click', () => {
+            const pointName = document.getElementById('point-name').value;
+            const pointTime = new Date();
+            
+            state.events.push({
+                type: 'point',
+                name: pointName,
+                time: pointTime
+            });
+            
+            document.getElementById('point-modal').style.display = 'none';
+            document.getElementById('point-name').value = '';
+            
+            saveState();
+            updateUI();
+        });
+
+        // Handle note modal
+        document.getElementById('save-note').addEventListener('click', () => {
+            const noteTitle = document.getElementById('note-title').value;
+            const noteContent = document.getElementById('note-content').value;
+            const noteTime = new Date();
+            
+            const noteData = {
+                type: 'note',
+                title: noteTitle,
+                content: noteContent,
+                time: noteTime
+            };
+            
+            // Check if we have an image
+            const imagePreview = document.getElementById('image-preview');
+            if (imagePreview.firstChild && imagePreview.firstChild.tagName === 'IMG') {
+                noteData.image = imagePreview.firstChild.src;
+            }
+            
+            state.events.push(noteData);
+            
+            document.getElementById('note-modal').style.display = 'none';
+            document.getElementById('note-title').value = '';
+            document.getElementById('note-content').value = '';
+            document.getElementById('image-preview').innerHTML = '';
+            
+            saveState();
+            updateUI();
+        });
+
+        // Handle image selection
+        document.getElementById('note-image').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.getElementById('image-preview');
+                    preview.innerHTML = '';
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.className = 'note-image';
+                    preview.appendChild(img);
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Close modal when clicking on X or Cancel
+        document.querySelectorAll('.modal-close').forEach(element => {
+            element.addEventListener('click', () => {
+                const modalId = element.getAttribute('data-modal');
+                document.getElementById(modalId).style.display = 'none';
+            });
+        });
+
+        // Export functions
+        function generateMarkdown() {
+            if (!state.startTime || state.events.length === 0) {
+                return 'No timeline data to export.';
+            }
+            
+            let markdown = `# Timeline: ${formatDate(state.startTime)}\n\n`;
+            markdown += `Started at: ${formatTime(state.startTime)}\n`;
+            
+            if (state.stopTime) {
+                markdown += `Stopped at: ${formatTime(state.stopTime)}\n`;
+                markdown += `Total duration: ${calculateDuration(state.startTime, state.stopTime)}\n`;
+            }
+            
+            markdown += '\n## Timeline Points\n\n';
+            
+            // Process all point events to create sections
+            let lastPoint = { time: state.startTime, name: 'Start' };
+            
+            state.events.forEach((event, index) => {
+                if (event.type === 'point' || event.type === 'stop') {
+                    const duration = calculateDuration(lastPoint.time, event.time);
+                    const sectionName = lastPoint.name || 'Unnamed Section';
+                    
+                    markdown += `### ${sectionName}\n`;
+                    markdown += `- Start: ${formatTime(lastPoint.time)}\n`;
+                    markdown += `- End: ${formatTime(event.time)}\n`;
+                    markdown += `- Duration: ${duration}\n\n`;
+                    
+                    // Find all notes between these points
+                    const sectionNotes = state.events.filter(e => 
+                        e.type === 'note' && 
+                        e.time >= lastPoint.time && 
+                        e.time < event.time
+                    );
+                    
+                    if (sectionNotes.length > 0) {
+                        markdown += '#### Notes:\n\n';
+                        
+                        sectionNotes.forEach(note => {
+                            markdown += `##### ${note.title || 'Note'} (${formatTime(note.time)})\n\n`;
+                            markdown += `${note.content || ''}\n\n`;
+                            
+                            if (note.image) {
+                                markdown += `[Image attached]\n\n`;
+                            }
+                        });
+                    }
+                    
+                    // Update lastPoint for next section
+                    if (event.type === 'point') {
+                        lastPoint = event;
+                    }
+                }
+            });
+            
+            return markdown;
+        }
+
+        document.getElementById('copy-export').addEventListener('click', () => {
+            const exportContent = document.getElementById('export-content');
+            exportContent.select();
+            document.execCommand('copy');
+            alert('Timeline exported to clipboard!');
+        });
+
+        document.getElementById('download-md').addEventListener('click', () => {
+            const markdown = generateMarkdown();
+            const blob = new Blob([markdown], {type: 'text/markdown'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `timeline_${formatDate(state.startTime)}.md`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+
+        // Initialize app
+        loadState();
+    </script>
+</body>
+</html>
